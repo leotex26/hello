@@ -13,11 +13,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
+/**
+ * classe qui s'occupe des routes /villes
+ */
 @RestController
 @RequestMapping("/villes")
 public class VilleControleur {
@@ -30,7 +30,10 @@ public class VilleControleur {
   @Autowired
   private PaysService paysService;
 
-
+  /**
+   * methode d'initialisation
+   * @throws VilleException
+   */
   @PostConstruct
   void initData() throws VilleException {
 

@@ -4,7 +4,9 @@ import fr.diginamic.hello.Validator.VilleValidator;
 import fr.diginamic.hello.exceptions.VilleException;
 import fr.diginamic.hello.model.Departement;
 import fr.diginamic.hello.model.Ville;
+import fr.diginamic.hello.repositories.VilleDao;
 import fr.diginamic.hello.repositories.VilleRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.BeanPropertyBindingResult;
@@ -20,8 +22,13 @@ public class VilleService {
   VilleValidator villeValidator;
 
   @Autowired
+  VilleDao villeDao;
+
+  @Autowired
   VilleRepository villeRepository;
 
+
+  @Transactional
   public Ville updateVille(Ville ville) throws VilleException {
 
     Errors errors = new BeanPropertyBindingResult(ville, "ville");
@@ -38,7 +45,7 @@ public class VilleService {
     return villeRepository.save(ville);
   }
 
-
+  @Transactional
   public Ville insertVille(Ville ville) throws VilleException {
     Errors errors = new BeanPropertyBindingResult(ville, "ville");
     villeValidator.validate(ville, errors);
@@ -59,7 +66,7 @@ public class VilleService {
       .toList();
   }
 
-
+  @Transactional
   public Ville save(Ville ville) {
     return villeRepository.save(ville);
   }
@@ -73,7 +80,7 @@ public class VilleService {
     return villeRepository.findAll();
   }
 
-
+  @Transactional
   public void remove(Ville v) {
     villeRepository.delete(v);
   }
