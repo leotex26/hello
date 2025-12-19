@@ -14,7 +14,7 @@ public class Departement {
 
   }
 
-  public Departement(String nom, String code, Pays pays) {
+  public Departement(String code, String nom, Pays pays) {
     this.nom = nom;
     this.code = code;
     this.pays = pays;
@@ -25,7 +25,9 @@ public class Departement {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Integer id;
 
+  @Column(nullable = true, name = "nom")
   private String nom;
+  @Column(nullable = false, name = "code")
   private String code;
 
   @OneToMany(mappedBy = "departement")

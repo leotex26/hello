@@ -4,6 +4,8 @@ import fr.diginamic.hello.exceptions.VilleException;
 import fr.diginamic.hello.model.Departement;
 import fr.diginamic.hello.model.Pays;
 import fr.diginamic.hello.model.Ville;
+import fr.diginamic.hello.model.VilleDto;
+import fr.diginamic.hello.model.mapper.VilleMapper;
 import fr.diginamic.hello.services.DepartementService;
 import fr.diginamic.hello.services.PaysService;
 import fr.diginamic.hello.services.VilleService;
@@ -13,7 +15,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * classe qui s'occupe des routes /villes
@@ -29,45 +34,23 @@ public class VilleControleur {
   private DepartementService departementService;
   @Autowired
   private PaysService paysService;
+  @Autowired
+  private VilleMapper villeMapper;
 
-  /**
-   * methode d'initialisation
-   * @throws VilleException
-   */
-  @PostConstruct
-  void initData() throws VilleException {
-
-    Pays pays = paysService.findOrCreate("France");
-
-    Departement d35 = departementService.findOrCreate("35", "ILLE-ET-VILAINE", pays);
-    Departement d29 = departementService.findOrCreate("29", "FINISTERE", pays);
-    Departement d56 = departementService.findOrCreate("56", "MORBIHAN", pays);
-
-    List<Ville> villes = List.of(
-      new Ville("Rennes", 300000, d35),
-      new Ville("Brest", 100000, d29),
-      new Ville("Quimper", 65000, d29),
-      new Ville("Vannes", 40000, d56),
-      new Ville("Saint-Malo", 55000, d35)
-    );
-
-    for (Ville ville : villes) {
-      if (!villeService.existsByNomAndDepartement(
-        ville.getNom(),
-        ville.getDepartement())) {
-
-        villeService.insertVille(ville);
-      }
-    }
-  }
 
   /**
    * méthode GET qui retourne la liste des villes
    * @return la liste des villes en base
    */
-  @GetMapping()
-  public List<Ville> findAll() {
-    return villeService.findAll();
+  @GetMapping
+  public List<VilleDto> findAll() {
+    List<VilleDto> villesDto = new ArrayList<>();
+
+    for (Ville ville : villeService.findAll()) {
+      villesDto.add(villeMapper.toDto(ville));
+    }
+
+    return villesDto;
   }
 
   /**
@@ -77,8 +60,8 @@ public class VilleControleur {
    * @throws VilleException
    */
   @GetMapping("/id/{id}")
-  public ResponseEntity<Ville> rechercherVilleParId(@PathVariable int id) throws VilleException {
-    Ville ville = villeService.findById(id);
+  public ResponseEntity<VilleDto> rechercherVilleParId(@PathVariable int id) throws VilleException {
+    VilleDto ville = villeMapper.toDto(villeService.findById(id));
     if (ville == null) {
       throw new VilleException("Ville n'existe pas");
     }
@@ -96,7 +79,7 @@ public class VilleControleur {
   @GetMapping("/nom/{nom}")
   public ResponseEntity<?> searchVilleByBegining(@PathVariable String nom) throws VilleException {
 
-    List<Ville> villesConcerned = villeService.findByBegining(nom);
+    List<VilleDto> villesConcerned = villeService.findByBegining(nom).stream().map(villeMapper::toDto).toList();
 
     if (villesConcerned.isEmpty()) {
       throw new VilleException(" Aucune ville dont le nom commence par " + nom + " n’a été trouvée\n");
@@ -105,27 +88,19 @@ public class VilleControleur {
   }
 
 
-
-
-
   /**
-   * méthode POST qui prend une nouvelle ville en paramètre et la met en base de
-   * données
-   * @param nom
-   * @param population
-   * @param codeDepartement
-   * @return
+   * permet d'ajouter une ville en base
+   * @param villeDto : notre schema de ville
+   * @return message de succès ou erreur
    * @throws VilleException
    */
   @PostMapping("/add")
-  public ResponseEntity<String> ajouterVille(@RequestParam String nom, @RequestParam int population, @RequestParam String codeDepartement) throws VilleException {
-    System.out.println("ajouterVille");
+  public ResponseEntity<String> ajouterVille(
+    @Valid @RequestBody VilleDto villeDto
+  ) throws VilleException {
 
-    Departement departement = departementService.findByCodeDepartement(codeDepartement);
-    Ville ville = new Ville(nom, population, departement);
-    villeService.insertVille(ville);
-
-    return ResponseEntity.ok("ville integrée avec succès");
+    villeService.creerVille(villeDto.getNom(), villeDto.getPopulation(), villeDto.getCodeDepartement(), villeDto.getIdDepartement());
+    return ResponseEntity.ok("Ville intégrée avec succès");
   }
 
 
@@ -133,35 +108,22 @@ public class VilleControleur {
   /**
    * méthode PUT qui prend une ville en paramètre et permet de modifier les données
    * d’une ville existante.
-   * @param id
-   * @param villeModifiee
-   * @param bindingResult
+   * @param villeDto
    * @return
    * @throws VilleException
    */
   @PutMapping("/{id}")
-  public ResponseEntity<Ville> modifierVilleParId(
+  public ResponseEntity<VilleDto> modifierVilleParId(
     @PathVariable Integer id,
-    @Valid @RequestBody Ville villeModifiee, // RequestBody >
-    BindingResult bindingResult
+    @Valid @RequestBody VilleDto villeDto
   ) throws VilleException {
-
-    if (bindingResult.hasErrors()) {
-      throw new VilleException("Attributs de ville invalides");
-    }
-
-    Ville villeExistante = villeService.findById(id);
-
-    villeExistante.setNom(villeModifiee.getNom());
-    villeExistante.setPopulation(villeModifiee.getPopulation());
-
-    Ville villeSauvegardee = villeService.save(villeExistante);
-
-    return ResponseEntity.ok(villeSauvegardee);
+    Ville villeModifiee = villeMapper.toBean(villeDto);
+    Ville villeSauvegardee = villeService.modifierVille(id, villeModifiee);
+    return ResponseEntity.ok(villeMapper.toDto(villeSauvegardee));
   }
 
   /**
-   * méthode DELETE qui permet de supprimer une ville en fonction de son i
+   * méthode DELETE qui permet de supprimer une ville en fonction de son id
    * @param id
    * @return
    * @throws VilleException
@@ -169,13 +131,8 @@ public class VilleControleur {
   @DeleteMapping("/{id}")
   public ResponseEntity<String> supprimerVilleParId(@PathVariable("id") int id) throws VilleException {
 
-    Ville v = villeService.findById(id);
-
-    if (v != null) {
-      villeService.remove(v);
-      return ResponseEntity.ok("supprimer avec succès");
-    }
-    throw new VilleException("ville non trouvé");
+    villeService.supprimerVille(id);
+    return ResponseEntity.ok("ville supprimée avec succès");
   }
 
   /**
@@ -190,7 +147,7 @@ public class VilleControleur {
     @RequestParam int min,
     @RequestParam(required = false) Integer max) throws VilleException {
 
-    List<Ville> villesConcerned = villeService.getVillesBetweenMinAndMax(min, max);
+    List<VilleDto> villesConcerned = villeService.getVillesBetweenMinAndMax(min, max).stream().map(villeMapper::toDto).toList();
 
     if (villesConcerned.isEmpty() && max == null) {
       throw new VilleException("Aucune ville n’a une population superieur à " + min);

@@ -7,6 +7,7 @@ import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.TypedQuery;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collection;
 import java.util.List;
 
 @Repository
@@ -69,4 +70,17 @@ public class VilleDao {
     return query.getResultList();
   }
 
+  public List<Ville> findByDepartementOrderByPopulationDesc(Departement dep) {
+    String jpql = "SELECT v FROM Ville v WHERE v.departement = :dep ORDER BY v.population DESC";
+    TypedQuery<Ville> query = em.createQuery(jpql, Ville.class);
+    query.setParameter("dep", dep);
+    return query.getResultList();
+  }
+
+  public List<Ville> findByDepartement(Departement dep) {
+    String jpql = "SELECT v FROM Ville v WHERE v.departement = :dep";
+    TypedQuery<Ville> query = em.createQuery(jpql, Ville.class);
+    query.setParameter("dep", dep);
+    return query.getResultList();
+  }
 }

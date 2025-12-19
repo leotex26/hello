@@ -9,7 +9,6 @@ import jakarta.validation.constraints.Size;
 @Entity
 public class Ville {
 
-
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Integer id;
