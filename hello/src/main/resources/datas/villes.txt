@@ -1,0 +1,25 @@
+"Rennes", 300000, 35
+"Nantes", 320000, 44
+"Angers", 155000, 49
+"Le Mans", 145000, 72
+"Caen", 105000, 14
+"Saint-Nazaire", 70000, 44
+"Saint-Malo", 46000, 35
+"Vannes", 54000, 56
+"La Roche-sur-Yon", 54000, 85
+"Cholet", 54000, 49
+"Quimper", 63000, 29
+"Brest", 140000, 29
+"Lorient", 58000, 56
+"Niort", 58000, 79
+"Angoulême", 42000, 16
+"Poitiers", 88000, 86
+"Alençon", 26000, 61
+"Cherbourg", 80000, 50
+"Dinan", 14000, 22
+"Vitré", 18000, 35
+"Fougères", 20000, 35
+"Redon", 9500, 35
+"Mortagne-au-Perche", 5000, 61
+"Auray", 13000, 56
+"Guérande", 14000, 44

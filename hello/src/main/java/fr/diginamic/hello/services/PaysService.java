@@ -37,4 +37,7 @@ public class PaysService {
     return paysRepository.findAll();
   }
 
+  public void insert(Pays pays) {
+    paysRepository.save(pays);
+  }
 }
