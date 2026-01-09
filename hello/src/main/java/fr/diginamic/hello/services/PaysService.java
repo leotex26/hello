@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 @Service
-public class PaysService {
+public class PaysService implements IPaysService{
 
   @Autowired
   private PaysRepository paysRepository;
@@ -40,4 +40,6 @@ public class PaysService {
   public void insert(Pays pays) {
     paysRepository.save(pays);
   }
+
+
 }

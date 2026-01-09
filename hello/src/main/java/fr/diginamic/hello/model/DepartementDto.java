@@ -14,15 +14,16 @@ public class DepartementDto {
 
   private String nom;
 
-  //private Set<VilleDto> villes;
+  private String codeRegion;
 
   public DepartementDto() {
   }
 
-  public DepartementDto(Integer id, String code, String nom) {
+  public DepartementDto(Integer id, String code, String nom, String codeRegion) {
     this.id = id;
     this.code = code;
     this.nom = nom;
+    this.codeRegion = codeRegion;
   }
 
   // getters / setters
@@ -51,4 +52,7 @@ public class DepartementDto {
     this.nom = nom;
   }
 
+
+  public String getCodeRegion() { return codeRegion; }
+  public void setCodeRegion(String codeRegion) { this.codeRegion = codeRegion; }
 }

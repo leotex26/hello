@@ -12,11 +12,17 @@ public class Pays {
 
   }
 
-
-  public Pays(String nom, Set<Departement> departements) {
+  public Pays(String nom) {
     this.nom = nom;
-    this.departements = departements;
+    this.regions = new HashSet<>();
   }
+
+
+  public Pays(String nom, Set<Region> regions) {
+    this.nom = nom;
+    this.regions = regions;
+  }
+
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -24,14 +30,11 @@ public class Pays {
 
   private String nom;
 
-  @OneToMany(mappedBy = "pays")
-  private Set<Departement> departements;
+  @OneToMany(mappedBy = "pays", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+  private Set<Region> regions = new HashSet<>();
 
 
-  public Pays(String nom) {
-    this.nom = nom;
-    departements = new HashSet<Departement>();
-  }
+
 
 
 
@@ -39,9 +42,9 @@ public class Pays {
     return nom;
   }
 
-  public Pays addDepartement(Departement departement) {
-    departements.add(departement);
-    departement.setPays(this);
+  public Pays addRegion(Region region) {
+    regions.add(region);
+    region.setPays(this);
     return this;
   }
 

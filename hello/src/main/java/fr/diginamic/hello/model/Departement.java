@@ -14,20 +14,21 @@ public class Departement {
 
   }
 
-  public Departement(String code, String nom, Pays pays) {
+  public Departement(String code, String nom, Region region) {
     this.nom = nom;
     this.code = code;
-    this.pays = pays;
-    pays.addDepartement(this);
+    this.region = region;
+    region.addDepartement(this);
   }
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Integer id;
 
-  @Column(nullable = true, name = "nom")
+
   private String nom;
-  @Column(nullable = false, name = "code")
+
+  @Column(unique = true, nullable = false)
   private String code;
 
   @OneToMany(mappedBy = "departement")
@@ -35,7 +36,9 @@ public class Departement {
   private Set<Ville> villes = new HashSet<>();
 
   @ManyToOne
-  private Pays pays;
+  private Region region;
+
+
 
 
 
@@ -68,12 +71,13 @@ public class Departement {
     villes.remove(ville);
   }
 
-  public Pays getPays() {
-    return pays;
+
+  public Region getRegion() {
+    return region;
   }
 
-  public void setPays(Pays pays) {
-    this.pays = pays;
+  public void setRegion(Region region) {
+    this.region = region;
   }
 
   public String getCode() {

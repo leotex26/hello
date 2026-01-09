@@ -3,31 +3,58 @@ package fr.diginamic.hello.services;
 import fr.diginamic.hello.exceptions.VilleException;
 import fr.diginamic.hello.model.Departement;
 import fr.diginamic.hello.model.Pays;
+import fr.diginamic.hello.model.Region;
 import fr.diginamic.hello.repositories.DepartementRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
-public class DepartementService {
+public class DepartementService implements IDepartementService{
 
   @Autowired
   private DepartementRepository departementRepository;
 
   @Autowired
-  private PaysService paysService;
+  private RegionService regionService;
+
+  @Autowired
+  private IPaysService paysService;
 
   /* ================== CRUD ================== */
 
-  @Transactional
+
   public Departement create(String code, String nom) throws VilleException {
-    Pays pays = paysService.findPays(1);
-    Departement dep = new Departement(code, nom, pays);
+    Optional<Region> OptRegion = regionService.findByCode("11");
+    Region region = OptRegion.get();
+
+    Departement dep = new Departement(code, nom, region);
     return departementRepository.save(dep);
   }
+
+  @Transactional
+  public Departement create(String code, String nom, String codeRegion) throws VilleException {
+
+    Region region = regionService.findByCode(codeRegion)
+      .orElseThrow(() ->
+        new VilleException("Aucune région trouvée pour le code : " + codeRegion)
+      );
+
+
+    Optional<Departement> existing = departementRepository.findByCode(code);
+    if (existing.isPresent()) {
+      return existing.get();
+    }
+
+    Departement dep = new Departement(code, nom, region);
+    return departementRepository.save(dep);
+  }
+
+
 
   @Transactional
   public Departement update(int id, String code, String nom) throws VilleException {
@@ -102,7 +129,7 @@ public class DepartementService {
       }
 
 
-      return create(codeDepartement, null);
+      return create(codeDepartement, null, null);
     }
 
 

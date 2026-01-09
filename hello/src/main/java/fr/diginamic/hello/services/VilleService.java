@@ -4,10 +4,15 @@ import fr.diginamic.hello.Validator.VilleValidator;
 import fr.diginamic.hello.exceptions.VilleException;
 import fr.diginamic.hello.model.Departement;
 import fr.diginamic.hello.model.Ville;
+import fr.diginamic.hello.model.VilleDto;
+import fr.diginamic.hello.model.mapper.VilleMapper;
 import fr.diginamic.hello.repositories.VilleDao;
 import fr.diginamic.hello.repositories.VilleRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.Errors;
@@ -17,16 +22,19 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-public class VilleService {
+public class VilleService implements IVilleService{
 
   @Autowired
   VilleValidator villeValidator;
 
   @Autowired
-  DepartementService departementService;
+  IDepartementService departementService;
 
   @Autowired
   VilleDao villeDao;
+
+  @Autowired
+  VilleMapper villeMapper;
 
   @Autowired
   VilleRepository villeRepository;
@@ -187,4 +195,115 @@ public class VilleService {
       .filter(v -> v.getDepartement().equals(dep))
       .collect(Collectors.toList());
   }
+
+  /**
+   * cherche les villes concernés par l'export
+   * @param min : seuil minimum de population
+   * @return les villes concernés
+   * @throws VilleException
+   */
+  public StringBuilder findForExport(int min) throws VilleException {
+    List<VilleDto> villes = getVillesBetweenMinAndMax(min,null).stream().map(villeMapper::toDto).toList();
+
+    if (villes.isEmpty()) {
+      throw new VilleException("Aucune ville n’a une population superieur à " + min);
+    }
+
+    StringBuilder csv = new StringBuilder();
+
+    for (VilleDto ville : villes){
+
+      Departement dep = departementService.findByCodeDepartement(ville.getCodeDepartement());
+
+      csv.append(ville.getNom()).append(";").append(ville.getPopulation()).append(";")
+        .append(ville.getCodeDepartement()).append(";").append(dep.getNom());
+
+    }
+
+
+    return csv;
+  }
+
+
+
+  /**
+   * return villes par page
+   * @param pageable : page séléctionnée
+   * @return toutes les villes de la page
+   */
+  public Page<Ville> findAll(Pageable pageable) {
+    return villeRepository.findAll(pageable);
+  }
+
+  /**
+   * retourne toutes les villes qui commence par une chaine de caracteres
+   * @param nom : chaine de caracteres
+   * @return une liste de villes
+   */
+  public List<Ville> findByNomDebut(String nom) {
+    return villeRepository.findByNomStartingWithIgnoreCase(nom);
+  }
+
+  /**
+   *
+   * @param min
+   * @return
+   */
+  public List<Ville> findByPopulationMin(int min) {
+    return villeRepository.findByPopulationGreaterThanOrderByPopulationDesc(min);
+  }
+
+  /**
+   *
+   * @param min
+   * @param max
+   * @return
+   */
+  public List<Ville> findByPopulationMinMax(int min, int max) {
+    return villeRepository.findByPopulationBetweenOrderByPopulationDesc(min, max);
+  }
+
+  /**
+   *
+   * @param idDep
+   * @param min
+   * @return
+   * @throws VilleException
+   */
+  public List<Ville> findByDepartementMin(int idDep, int min) throws VilleException {
+    Departement dep = departementService.findDepartementById(idDep);
+    return villeRepository
+      .findByDepartementAndPopulationGreaterThanOrderByPopulationDesc(dep, min);
+  }
+
+  /**
+   *
+   * @param idDep
+   * @param min
+   * @param max
+   * @return
+   * @throws VilleException
+   */
+  public List<Ville> findByDepartementMinMax(int idDep, int min, int max)
+    throws VilleException {
+
+    Departement dep = departementService.findDepartementById(idDep);
+    return villeRepository
+      .findByDepartementAndPopulationBetweenOrderByPopulationDesc(dep, min, max);
+  }
+
+  /**
+   *
+   * @param idDep
+   * @param n
+   * @return
+   * @throws VilleException
+   */
+  public List<Ville> findTopNVilles(int idDep, int n) throws VilleException {
+    Departement dep = departementService.findDepartementById(idDep);
+    Pageable pageable = PageRequest.of(0, n);
+    return villeRepository.findByDepartementOrderByPopulationDesc(dep, pageable);
+  }
+
+
 }

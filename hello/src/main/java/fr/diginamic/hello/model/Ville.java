@@ -28,7 +28,6 @@ public class Ville {
     this.nom = nom;
     this.population = population;
     this.departement = departement;
-    departement.addVille(this);
   }
 
   public Ville() {
