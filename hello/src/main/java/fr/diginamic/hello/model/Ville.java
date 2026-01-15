@@ -5,6 +5,8 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
+import java.time.LocalDateTime;
+
 
 @Entity
 public class Ville {
@@ -24,6 +26,12 @@ public class Ville {
   private Departement departement;
 
 
+  private String userMaj;
+
+  private LocalDateTime dateMaj;
+
+
+
   public Ville(String nom, int population, Departement departement) {
     this.nom = nom;
     this.population = population;
@@ -31,6 +39,23 @@ public class Ville {
   }
 
   public Ville() {
+  }
+
+
+  public String getUserMaj() {
+    return userMaj;
+  }
+
+  public void setUserMaj(String userMaj) {
+    this.userMaj = userMaj;
+  }
+
+  public LocalDateTime getDateMaj() {
+    return dateMaj;
+  }
+
+  public void setDateMaj(LocalDateTime dateMaj) {
+    this.dateMaj = dateMaj;
   }
 
   public String getNom() {
@@ -49,7 +74,7 @@ public class Ville {
     this.population = population;
   }
 
-
+  public void setId(Integer id) { this.id = id;}
 
   public Integer getId() {
     return id;
@@ -71,4 +96,6 @@ public class Ville {
       ", population=" + population +
       '}';
   }
+
+
 }

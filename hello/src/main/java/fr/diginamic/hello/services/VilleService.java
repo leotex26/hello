@@ -1,6 +1,7 @@
 package fr.diginamic.hello.services;
 
 import fr.diginamic.hello.Validator.VilleValidator;
+import fr.diginamic.hello.controleurs.VilleControleur;
 import fr.diginamic.hello.exceptions.VilleException;
 import fr.diginamic.hello.model.Departement;
 import fr.diginamic.hello.model.Ville;
@@ -9,14 +10,19 @@ import fr.diginamic.hello.model.mapper.VilleMapper;
 import fr.diginamic.hello.repositories.VilleDao;
 import fr.diginamic.hello.repositories.VilleRepository;
 import jakarta.transaction.Transactional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.Errors;
 
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -38,8 +44,11 @@ public class VilleService implements IVilleService{
 
   @Autowired
   VilleRepository villeRepository;
+
   @Autowired
   private PaysService paysService;
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(VilleService.class);
 
 
   @Transactional
@@ -114,11 +123,19 @@ public class VilleService implements IVilleService{
 
     //villeService.creerVille(villeDto.getNom(), villeDto.getPopulation(), villeDto.getCodeDepartement(), villeDto.getIdDepartement());
   @Transactional
-  public Ville creerVille(String nom, int population,String codeDepartement, Integer idDepartement) throws VilleException {
+  public Ville creerVille(Ville ville) throws VilleException {
 
-    Departement departement =departementService.findOrCreate(codeDepartement, idDepartement);
+    Authentication authentication =  SecurityContextHolder.getContext().getAuthentication();
 
-    Ville ville = new Ville(nom, population, departement);
+    if (authentication.isAuthenticated()){
+      ville.setDateMaj(LocalDateTime.now());
+      ville.setUserMaj(authentication.getName());
+      LOGGER.info("Ville "+ ville.getNom() +" mis à jour par :"+ authentication.getName());
+    }else{
+      ville.setDateMaj(LocalDateTime.now());
+      ville.setUserMaj("Système");
+      LOGGER.info("Ville "+ ville.getNom() +" mis à jour par : Système");
+    }
 
     Errors errors = new BeanPropertyBindingResult(ville, "ville");
     villeValidator.validate(ville, errors);
@@ -130,10 +147,23 @@ public class VilleService implements IVilleService{
   }
 
   @Transactional
-  public Ville modifierVille(Integer id, Ville villeModifiee) throws VilleException {
-    Ville villeExistante = findById(id);
+  public Ville modifierVille(Ville villeModifiee) throws VilleException {
+
+    Authentication authentication =  SecurityContextHolder.getContext().getAuthentication();
+
+    if (authentication.isAuthenticated()) {
+      villeModifiee.setDateMaj(LocalDateTime.now());
+      villeModifiee.setUserMaj(authentication.getName());
+      LOGGER.info("Ville " + villeModifiee.getNom() + " mise à jour par : " + authentication.getName());
+    } else {
+      villeModifiee.setDateMaj(LocalDateTime.now());
+      villeModifiee.setUserMaj("Système");
+      LOGGER.info("Ville " + villeModifiee.getNom() + " mise à jour par : Système");
+    }
+
+    Ville villeExistante = findById(villeModifiee.getId());
     if (villeExistante == null) {
-      throw new VilleException("Ville inexistante avec id " + id);
+      throw new VilleException("Ville inexistante avec id " + villeModifiee.getId());
     }
 
     Errors errors = new BeanPropertyBindingResult(villeModifiee, "ville");

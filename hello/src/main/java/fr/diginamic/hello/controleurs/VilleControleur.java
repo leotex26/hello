@@ -8,15 +8,21 @@ import fr.diginamic.hello.services.DepartementService;
 import fr.diginamic.hello.services.PaysService;
 import fr.diginamic.hello.services.VilleService;
 import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.data.domain.Pageable;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -36,12 +42,15 @@ public class VilleControleur implements IVilleControleur{
   @Autowired
   private VilleMapper villeMapper;
 
+  private static final Logger LOGGER = LoggerFactory.getLogger(VilleControleur.class);
+
 
   /**
    * méthode GET qui retourne la liste des villes
    * @return la liste des villes en base
    */
-  @GetMapping
+  //@Secured("ROLE_USER")
+  @GetMapping()
   public Page<VilleDto> findAll(
     @RequestParam(defaultValue = "0") int page,
     @RequestParam(defaultValue = "10") int size
@@ -59,6 +68,7 @@ public class VilleControleur implements IVilleControleur{
    * @return le json de la ville recherché
    * @throws VilleException
    */
+  @Secured("ROLE_USER")
   @GetMapping("/id/{id}")
   public ResponseEntity<VilleDto> rechercherVilleParId(@PathVariable int id) throws VilleException {
     VilleDto ville = villeMapper.toDto(villeService.findById(id));
@@ -76,6 +86,7 @@ public class VilleControleur implements IVilleControleur{
    * @return la ville recherchéé
    * @throws VilleException
    */
+  @Secured("ROLE_USER")
   @GetMapping("/search")
   public List<VilleDto> searchByNom(@RequestParam String nom) {
     return villeService.findByNomDebut(nom).stream()
@@ -91,6 +102,7 @@ public class VilleControleur implements IVilleControleur{
    * @return une liste de villes trouvées en base
    * @throws VilleException
    */
+  @Secured("ROLE_USER")
   @GetMapping("/searchByPopulation")
   public ResponseEntity<?> searchByPopulation(
     @RequestParam int min,
@@ -113,6 +125,7 @@ public class VilleControleur implements IVilleControleur{
    * @param min : seuil minimum de population
    * @return
    */
+  @Secured("ROLE_USER")
   @GetMapping("/population/min")
   public List<VilleDto> populationMin(@RequestParam int min) {
     return villeService.findByPopulationMin(min).stream()
@@ -126,6 +139,7 @@ public class VilleControleur implements IVilleControleur{
    * @param max
    * @return
    */
+  @Secured("ROLE_USER")
   @GetMapping("/population")
   public List<VilleDto> populationMinMax(
     @RequestParam int min,
@@ -144,6 +158,7 @@ public class VilleControleur implements IVilleControleur{
    * @return
    * @throws VilleException
    */
+  @Secured("ROLE_USER")
   @GetMapping("/departement/{id}/population")
   public List<VilleDto> villesParDepartement(
     @PathVariable int id,
@@ -165,6 +180,7 @@ public class VilleControleur implements IVilleControleur{
    * @return
    * @throws VilleException
    */
+  @Secured("ROLE_USER")
   @GetMapping("/departement/{id}/top")
   public List<VilleDto> topNVilles(
     @PathVariable int id,
@@ -184,12 +200,15 @@ public class VilleControleur implements IVilleControleur{
    * @return message de succès ou erreur
    * @throws VilleException
    */
+  @Secured({"ROLE_USER","ROLE_ADMIN"})
   @PostMapping("/add")
   public ResponseEntity<String> ajouterVille(
     @Valid @RequestBody VilleDto villeDto
   ) throws VilleException {
 
-    villeService.creerVille(villeDto.getNom(), villeDto.getPopulation(), villeDto.getCodeDepartement(), villeDto.getIdDepartement());
+    Ville ville = villeMapper.toBean(villeDto);
+
+    villeService.creerVille(ville);
     return ResponseEntity.ok("Ville intégrée avec succès");
   }
 
@@ -202,13 +221,18 @@ public class VilleControleur implements IVilleControleur{
    * @return
    * @throws VilleException
    */
+  @Secured({"ROLE_USER","ROLE_ADMIN"})
   @PutMapping("/{id}")
   public ResponseEntity<VilleDto> modifierVilleParId(
     @PathVariable Integer id,
     @Valid @RequestBody VilleDto villeDto
   ) throws VilleException {
-    Ville villeModifiee = villeMapper.toBean(villeDto);
-    Ville villeSauvegardee = villeService.modifierVille(id, villeModifiee);
+
+    Ville ville = villeMapper.toBean(villeDto);
+    ville.setId(id);
+
+    Ville villeSauvegardee = villeService.modifierVille(ville);
+
     return ResponseEntity.ok(villeMapper.toDto(villeSauvegardee));
   }
 
@@ -218,6 +242,7 @@ public class VilleControleur implements IVilleControleur{
    * @return
    * @throws VilleException
    */
+  @Secured({"ROLE_USER","ROLE_ADMIN"})
   @DeleteMapping("/{id}")
   public ResponseEntity<String> supprimerVilleParId(@PathVariable("id") int id) throws VilleException {
 
@@ -234,6 +259,7 @@ public class VilleControleur implements IVilleControleur{
    * @return
    * @throws VilleException
    */
+  @Secured("ROLE_USER")
   @GetMapping(value = "/exportCSV", produces = "text/csv")
   public ResponseEntity<byte[]> exportCSV(@RequestParam int min) throws VilleException {
     StringBuilder csv = villeService.findForExport(min);

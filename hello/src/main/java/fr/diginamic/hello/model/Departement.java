@@ -3,6 +3,7 @@ package fr.diginamic.hello.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -39,9 +40,26 @@ public class Departement {
   private Region region;
 
 
+  private String userMaj;
+
+  private LocalDateTime dateMaj;
 
 
+  public String getUserMaj() {
+    return userMaj;
+  }
 
+  public void setUserMaj(String userMaj) {
+    this.userMaj = userMaj;
+  }
+
+  public LocalDateTime getDateMaj() {
+    return dateMaj;
+  }
+
+  public void setDateMaj(LocalDateTime dateMaj) {
+    this.dateMaj = dateMaj;
+  }
 
   public Integer getId() {
     return id;

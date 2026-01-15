@@ -18,15 +18,21 @@ import fr.diginamic.hello.services.IDepartementService;
 import fr.diginamic.hello.services.IVilleService;
 import jakarta.persistence.Table;
 import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -48,8 +54,12 @@ public class DepartementControleur implements IDepartementControleur{
   @Autowired
   private VilleMapper villeMapper;
 
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(DepartementControleur.class);
+
   /* ================== CRUD ================== */
 
+  @Secured("ROLE_USER")
   @GetMapping
   public List<DepartementDto> findAll() {
     return departementService.findAll().stream()
@@ -57,31 +67,42 @@ public class DepartementControleur implements IDepartementControleur{
       .toList();
   }
 
+  @Secured("ROLE_USER")
   @GetMapping("/{id}")
   public ResponseEntity<DepartementDto> findById(@PathVariable int id) throws VilleException {
     Departement dep = departementService.findDepartementById(id);
     return ResponseEntity.ok(departementMapper.toDto(dep));
   }
 
+  @Secured({"ROLE_USER", "ROLE_ADMIN"})
   @PostMapping
   public ResponseEntity<DepartementDto> create(
     @Valid @RequestBody DepartementDto dto
   ) throws VilleException {
 
-    Departement dep = departementService.create(dto.getCode(), dto.getNom(), dto.getCodeRegion());
+    Departement dep = departementMapper.toBean(dto);
+
+    dep = departementService.create(dep);
+
     return ResponseEntity.ok(departementMapper.toDto(dep));
   }
 
+  @Secured({"ROLE_USER", "ROLE_ADMIN"})
   @PutMapping("/{id}")
   public ResponseEntity<DepartementDto> update(
     @PathVariable int id,
     @Valid @RequestBody DepartementDto dto
   ) throws VilleException {
 
-    Departement dep = departementService.update(id, dto.getCode(), dto.getNom());
+    Departement dep = departementMapper.toBean(dto);
+    dep.setId(id);
+
+    dep = departementService.update(dep);
+
     return ResponseEntity.ok(departementMapper.toDto(dep));
   }
 
+  @Secured("ROLE_USER")
   @DeleteMapping("/{id}")
   public ResponseEntity<String> delete(@PathVariable int id) throws VilleException {
     departementService.delete(id);
@@ -93,6 +114,7 @@ public class DepartementControleur implements IDepartementControleur{
   /**
    * Lister les n plus grandes villes d’un département
    */
+  @Secured("ROLE_USER")
   @GetMapping("/{id}/top-villes")
   public ResponseEntity<List<VilleDto>> topNVilles(
     @PathVariable("id") int id,
@@ -114,6 +136,7 @@ public class DepartementControleur implements IDepartementControleur{
   /**
    * Villes par population min/max
    */
+  @Secured("ROLE_USER")
   @GetMapping("/{id}/villes")
   public ResponseEntity<List<VilleDto>> villesParPopulation(
     @PathVariable int id,
@@ -131,6 +154,7 @@ public class DepartementControleur implements IDepartementControleur{
     return ResponseEntity.ok(villes);
   }
 
+  @Secured("ROLE_USER")
   @GetMapping(value = "/{code}/pdf", produces = MediaType.APPLICATION_PDF_VALUE)
   public ResponseEntity<byte[]> exportDepartementPdf(@PathVariable String code) throws VilleException, DocumentException {
 

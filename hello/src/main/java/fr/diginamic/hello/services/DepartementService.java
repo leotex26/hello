@@ -1,14 +1,20 @@
 package fr.diginamic.hello.services;
 
+import fr.diginamic.hello.controleurs.DepartementControleur;
 import fr.diginamic.hello.exceptions.VilleException;
 import fr.diginamic.hello.model.Departement;
 import fr.diginamic.hello.model.Pays;
 import fr.diginamic.hello.model.Region;
 import fr.diginamic.hello.repositories.DepartementRepository;
 import jakarta.transaction.Transactional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -24,6 +30,8 @@ public class DepartementService implements IDepartementService{
 
   @Autowired
   private IPaysService paysService;
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(DepartementService.class);
 
   /* ================== CRUD ================== */
 
@@ -54,6 +62,28 @@ public class DepartementService implements IDepartementService{
     return departementRepository.save(dep);
   }
 
+  @Transactional
+  public Departement create(Departement dep) {
+
+    Authentication authentication =  SecurityContextHolder.getContext().getAuthentication();
+
+    if (authentication.isAuthenticated()){
+      dep.setDateMaj(LocalDateTime.now());
+      dep.setUserMaj(authentication.getName());
+      LOGGER.info("Departement "+ dep.getNom() +" mis à jour par :"+ authentication.getName());
+    }else{
+      dep.setDateMaj(LocalDateTime.now());
+      dep.setUserMaj("Système");
+      LOGGER.info("Departement "+ dep.getNom() +" mis à jour par : Système");
+    }
+
+    Optional<Departement> existing = departementRepository.findByCode(dep.getCode());
+    if (existing.isPresent()) {
+      return existing.get();
+    }
+
+    return departementRepository.save(dep);
+  }
 
 
   @Transactional
@@ -61,6 +91,29 @@ public class DepartementService implements IDepartementService{
     Departement dep = findDepartementById(id);
     dep.setCode(code);
     dep.setNom(nom);
+    return departementRepository.save(dep);
+  }
+
+
+
+  @Transactional
+  public Departement update(Departement departement) throws VilleException {
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+    Departement dep = findDepartementById(departement.getId());
+
+    if (authentication.isAuthenticated()) {
+      dep.setDateMaj(LocalDateTime.now());
+      dep.setUserMaj(authentication.getName());
+      LOGGER.info("Departement "+ dep.getNom() +" mis à jour par :"+ authentication.getName());
+    } else {
+      dep.setDateMaj(LocalDateTime.now());
+      dep.setUserMaj("Système");
+      LOGGER.info("Departement "+ dep.getNom() +" mis à jour par : Système");
+    }
+
+    dep.setCode(departement.getCode());
+    dep.setNom(departement.getNom());
     return departementRepository.save(dep);
   }
 
